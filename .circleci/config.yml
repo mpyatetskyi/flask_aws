@@ -4,18 +4,15 @@ orbs:
   python: circleci/python@0.2.1
 
 jobs:
-  build-and-test:
-    executor: python/default
+  flake8:
+    docker:
+      - image: circleci/python:3.9.1
     steps:
       - checkout
-      - python/load-cache
-      - python/install-deps
-      - python/save-cache
-      - run:
-          command: ./manage.py test
-          name: Test
-
+      - run: pip install flake8
+      - run: flake8
 workflows:
-  main:
+  first:
     jobs:
-      - build-and-test
+      - flake8
+
