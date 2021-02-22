@@ -20,15 +20,18 @@ def test_index_data():
     response = tester.get("/")
     assert b'Hello World' in response.data
 
+
 def test_new_game_index():
     tester = app.test_client()
     response = tester.get("/newgame")
     assert response.status_code == 200
 
+
 def test_new_game_content():
     tester = app.test_client()
     response = tester.get("/newgame", content_type='application/json')
     assert response.content_type == 'application/json'
+
 
 def test_new_game():
     tester = app.test_client()
