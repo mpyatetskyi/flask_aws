@@ -20,7 +20,3 @@ def test_cards_in_response():
     assert b'cards' in response.data
 
 
-def test_cards_type_in_response():
-    tester = app.test_client()
-    response = tester.get('/newgame')
-    assert b'cards' in response.data
