@@ -1,8 +1,7 @@
-from enum import Enum, IntEnum
-from random import shuffle
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-import json
+from enum import IntEnum
+from random import shuffle
 
 
 class Suits(IntEnum):
@@ -27,13 +26,15 @@ class Ranks(IntEnum):
     KING = 12
     ACE = 13
 
+
 @dataclass_json
 @dataclass(frozen=True)
 class Card:
     suit: Suits
     rank: Ranks
 
-    def to_id(self, card):
+    @staticmethod
+    def to_id(card):
         return card.suit.value * 100 + card.rank.value
 
     @staticmethod
@@ -44,29 +45,6 @@ class Card:
 
     def __repr__(self):
         return f'({self.rank.name}, {self.suit.name})'
-
-
-#card = Card(Suits.HEARTS, Ranks.ACE)
-#card1 = Card(Suits.SPADES, Ranks.JACK)
-#print(card.to_id(card))
-#print(card.to_id(card1))
-
-#print(Card.from_id(213).to_json())
-#print(asdict(Card(Suits.HEARTS, Ranks.ACE)))
-
-#rint(asdict(Card(Suits.HEARTS, Ranks.ACE)).items())
-
-
-#print(asdict(card))
-#print(card)
-
-#card = Card(Suits.HEARTS, Ranks.ACE)
-#print(card)
-#card_json = card.to_json()
-#print(card_json)
-#c = Card.from_json(card_json)
-#print(c)
-
 
 
 class Deck:
@@ -88,23 +66,9 @@ class Deck:
             return self.deck.pop()
 
 
-def card_id(card):
-    return card.suit.value*100 + card.rank.value
-
-
-def from_id(id):
-        suit = Suits(id // 100)
-        rank = Ranks(id % 100)
-        return Card(suit, rank)
-
-
 @dataclass_json
 @dataclass(frozen=True)
 class GameDataDTO:
     game_id: int
     cards: list
     status: bool
-
-
-
-
