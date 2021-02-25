@@ -1,6 +1,5 @@
 import sqlite3
-
-from methods import Card, Suits, Ranks, asdict, from_id
+from methods import Card
 
 conn = sqlite3.connect('blackjack.db', check_same_thread=False)
 c = conn.cursor()
@@ -88,6 +87,7 @@ class Game(DatabaseTables):
     def select_bet(self, id):
         c.execute('SELECT bet FROM game '
                   'WHERE user_id=?', [id])
+        return
 
 
 class UserCards(DatabaseTables):
@@ -99,20 +99,18 @@ class UserCards(DatabaseTables):
         c.execute("""CREATE TABLE IF NOT EXISTS user_cards(
                     game_id INTEGER NOT NULL,
                     card_id INTEGER NOT NULL,
-                    FOREIGN KEY (game_id) REFERENCES game(game_id)
-                    PRIMARY KEY (game_id, card_id)   
+                    FOREIGN KEY (game_id) REFERENCES game(game_id),
+                    PRIMARY KEY (game_id, card_id)
                     )""")
 
     def insert(self, game_id, card_id):
-        c.execute(f'INSERT INTO user_cards (game_id, card_id)'
-                  f'VALUES (?,?)', [game_id, card_id])
+        c.execute('INSERT INTO user_cards (game_id, card_id)'
+                  'VALUES (?,?)', [game_id, card_id])
 
     def select_cards(self, game_id):
         c.execute('SELECT card_id FROM user_cards '
                   'WHERE (game_id=?)', [game_id])
-        res = [from_id(i[0]) for i in c.fetchall()]
-        a = Card(Suits.HEARTS, Ranks.ACE)
-        return res
+        return [Card.from_id(i[0]) for i in c.fetchall()]
 
 
 class DealerCards(DatabaseTables):
@@ -129,5 +127,17 @@ class DealerCards(DatabaseTables):
                     )""")
 
     def insert(self, game_id, card_id):
-        c.execute(f'INSERT INTO dealer_cards (game_id, card_id)'
-                  f'VALUES (?,?)', [game_id, card_id])
+        c.execute('INSERT INTO dealer_cards (game_id, card_id)'
+                  'VALUES (?,?)', [game_id, card_id])
+
+    def select_one_card(self, game_id):
+        c.execute('SELECT card_id FROM dealer_cards '
+                  'WHERE (game_id=?) LIMIT 1', [game_id])
+        card = c.fetchone()
+        return [Card.from_id(card[0])]
+
+    def select_cards(self, game_id):
+        c.execute('SELECT card_id FROM dealer_cards '
+                  'WHERE (game_id=?)', [game_id])
+        res = [Card.from_id(i[0]) for i in c.fetchall()]
+        return res
