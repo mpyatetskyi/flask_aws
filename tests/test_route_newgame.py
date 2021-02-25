@@ -83,3 +83,9 @@ def test_card_rank_in_range_response_json():
     assert data['cards'][0]['rank'] in range(1, 15)
     assert type(data['cards'][1]['rank']) == int
     assert data['cards'][1]['rank'] in range(1, 15)
+
+def test_status_type_bool_response_json():
+    tester = app.test_client()
+    response = tester.get('/newgame')
+    data = response.get_json()
+    assert data['status'] in (bool, None)
