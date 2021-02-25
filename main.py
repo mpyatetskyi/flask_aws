@@ -1,14 +1,8 @@
-from flask import Flask, request, jsonify
-from methods import card_id, Deck, Ranks, Suits, Card, from_id, GameDataDTO
+import json
 import sqlite3
 from database import User, ChipsLedger, Game, UserCards, DealerCards
-import json
-from dataclasses import dataclass, asdict
-from dataclasses_json import dataclass_json
-from dataclasses import asdict
-
-
-
+from flask import Flask, request, jsonify
+from methods import Deck, Card
 
 
 app = Flask(__name__)
@@ -21,18 +15,6 @@ c = conn.cursor()
 def hello():
     return jsonify('Hello World')
 
-@app.route("/test")
-def tests():
-    a ={'game_id' : 1, 'cards' : [{'suit': 'Hearts', 'rank': 'Ace'}, {'suit': 'Spades', 'rank': 'Ace'}]}
-    return json.dumps(a)
-
-
-@app.route('/test/<int:id>', methods=['GET'])
-def test(id):
-    c.execute('SELECT user_id,chips FROM chips_ledger WHERE user_id=?', [id])
-    data = c.fetchall()
-    return jsonify(data)
-
 
 @app.route('/newuser/<string:name>', methods=['GET', 'POST'])
 def new_user(name):
@@ -41,6 +23,7 @@ def new_user(name):
     conn.commit()
     data = user.select_user_id()
     return json.dumps(data)
+
 
 @app.route('/createtables')
 def create_tables():
@@ -57,24 +40,27 @@ def create_tables():
     conn.commit()
     return "all tables were successfully created"
 
+
 user_id = 1
 deck = Deck()
 deck.shuffle()
 
+
 @app.route('/newgame', methods=['GET', 'POST'])
 def new_game():
+    game_id = 1
     user_cards = UserCards()
     dealer_cards = DealerCards()
-    game_id = 1
     for _ in range(2):
-        user_cards.insert(game_id=game_id, card_id=card_id(deck.deal()))
-        dealer_cards.insert(game_id=game_id, card_id=card_id(deck.deal()))
-    response = user_cards.select_cards(game_id=game_id)
-    gdd = GameDataDTO(game_id=game_id, cards=response, status=None)
-    return jsonify(gdd)
+        user_cards.insert(game_id=game_id, card_id=Card.to_id(deck.deal()))
+        dealer_cards.insert(game_id=game_id, card_id=Card.to_id(deck.deal()))
+    user = user_cards.select_cards(game_id=game_id)
+    dealer = dealer_cards.select_one_card(game_id=game_id)
+    return jsonify(game_id=game_id, user_cards=user,
+                   dealer_cards=dealer, status=None)
 
 
-@app.route('/decision', methods=['GET', 'POST'] )
+@app.route('/decision', methods=['GET', 'POST'])
 def decision():
 
     game_id = 1
@@ -83,12 +69,9 @@ def decision():
         response = user_cards.select_cards(game_id=game_id)
         return jsonify(game_id=game_id, cards=response)
     elif request.method == 'POST':
-        user_cards.insert(game_id=game_id, card_id=card_id(deck.deal()))
+        user_cards.insert(game_id=game_id, card_id=Card.to_id((deck.deal())))
         response = user_cards.select_cards(game_id=game_id)
         return jsonify(game_id=game_id, cards=response)
-
-
-#jsonify(game_id=game_id, suit=card['suit'].name, rank=card['rank'].name)
 
 
 if __name__ == '__main__':
