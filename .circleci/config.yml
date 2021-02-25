@@ -11,8 +11,16 @@ jobs:
       - checkout
       - run: pip install flake8
       - run: flake8
+  pytest:
+    docker:
+      - image: circleci/python:3.9.1
+    steps:
+      - checkout
+      - run: pip install pytest
+      - run: pytest
 workflows:
   first:
     jobs:
       - flake8
+      - pytest
 
