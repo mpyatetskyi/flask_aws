@@ -72,6 +72,16 @@ def test_cards_len_in_response_json():
     assert type(data['user_cards'][1]) == dict
 
 
+def test_card_rank_in_range_response_json():
+    tester = app.test_client()
+    response = tester.get('/newgame')
+    data = response.get_json()
+    assert type(data['user_cards'][0]['rank']) == int
+    assert data['user_cards'][0]['rank'] in range(1, 15)
+    assert type(data['user_cards'][1]['rank']) == int
+    assert data['user_cards'][1]['rank'] in range(1, 15)
+
+
 def test_card_suit_in_range_response_json():
     tester = app.test_client()
     response = tester.get('/newgame')
@@ -81,12 +91,3 @@ def test_card_suit_in_range_response_json():
     assert type(data['user_cards'][1]['suit']) == int
     assert data['user_cards'][1]['suit'] in range(1, 5)
 
-
-def test_card_rank_in_range_response_json():
-    tester = app.test_client()
-    response = tester.get('/newgame')
-    data = response.get_json()
-    assert type(data['user_cards'][0]['rank']) == int
-    assert data['user_cards'][0]['rank'] in range(1, 15)
-    assert type(data['user_cards'][1]['rank']) == int
-    assert data['user_cards'][1]['rank'] in range(1, 15)
