@@ -22,11 +22,18 @@ def test_game_id_in_json_response():
     assert 'game_id' in data
 
 
-def test_cards_in_json_response():
+def test_user_cards_in_json_response():
     tester = app.test_client()
     response = tester.get('/newgame')
     data = response.get_json()
-    assert 'game_id' in data
+    assert 'user_cards' in data
+
+
+def test_dealer_cards_in_json_response():
+    tester = app.test_client()
+    response = tester.get('/newgame')
+    data = response.get_json()
+    assert 'dealer_cards' in data
 
 
 def test_status_in_json_response():
@@ -54,38 +61,32 @@ def test_cards_list_in_response_json():
     tester = app.test_client()
     response = tester.get('/newgame')
     data = response.get_json()
-    assert type(data['cards']) == list
+    assert type(data['user_cards']) == list
 
 
 def test_cards_len_in_response_json():
     tester = app.test_client()
     response = tester.get('/newgame')
     data = response.get_json()
-    assert type(data['cards'][0]) == dict
-    assert type(data['cards'][1]) == dict
+    assert type(data['user_cards'][0]) == dict
+    assert type(data['user_cards'][1]) == dict
 
 
 def test_card_suit_in_range_response_json():
     tester = app.test_client()
     response = tester.get('/newgame')
     data = response.get_json()
-    assert type(data['cards'][0]['suit']) == int
-    assert data['cards'][0]['suit'] in range(1, 5)
-    assert type(data['cards'][1]['suit']) == int
-    assert data['cards'][1]['suit'] in range(1, 5)
+    assert type(data['user_cards'][0]['suit']) == int
+    assert data['user_cards'][0]['suit'] in range(1, 5)
+    assert type(data['user_cards'][1]['suit']) == int
+    assert data['user_cards'][1]['suit'] in range(1, 5)
 
 
 def test_card_rank_in_range_response_json():
     tester = app.test_client()
     response = tester.get('/newgame')
     data = response.get_json()
-    assert type(data['cards'][0]['rank']) == int
-    assert data['cards'][0]['rank'] in range(1, 15)
-    assert type(data['cards'][1]['rank']) == int
-    assert data['cards'][1]['rank'] in range(1, 15)
-
-def test_status_type_bool_response_json():
-    tester = app.test_client()
-    response = tester.get('/newgame')
-    data = response.get_json()
-    assert data['status'] in (bool, None)
+    assert type(data['user_cards'][0]['rank']) == int
+    assert data['user_cards'][0]['rank'] in range(1, 15)
+    assert type(data['user_cards'][1]['rank']) == int
+    assert data['user_cards'][1]['rank'] in range(1, 15)
