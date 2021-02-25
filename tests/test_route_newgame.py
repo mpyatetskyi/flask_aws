@@ -90,4 +90,3 @@ def test_card_suit_in_range_response_json():
     assert data['user_cards'][0]['suit'] in range(1, 5)
     assert type(data['user_cards'][1]['suit']) == int
     assert data['user_cards'][1]['suit'] in range(1, 5)
-
