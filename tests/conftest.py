@@ -20,5 +20,3 @@ def data_json(client):
     request = client.get('/newgame')
     data = request.get_json()
     yield data
-
-
