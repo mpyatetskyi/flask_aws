@@ -7,22 +7,8 @@ from methods import Deck, Card
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
-conn = sqlite3.connect('blackjack.db', check_same_thread=False)
+conn = sqlite3.connect('C:/Users/mpiatetskyi/PycharmProjects/flask_aws/blackjack.db', check_same_thread=False)
 c = conn.cursor()
-
-
-@app.route("/")
-def hello():
-    return jsonify('Hello World')
-
-
-@app.route('/newuser/<string:name>', methods=['GET', 'POST'])
-def new_user(name):
-    user = User()
-    user.insert(name)
-    conn.commit()
-    data = user.select_user_id()
-    return json.dumps(data)
 
 
 @app.route('/createtables')
@@ -43,27 +29,67 @@ def create_tables():
 
 user_id = 1
 deck = Deck()
-deck.shuffle()
-
 
 @app.route('/newgame', methods=['GET', 'POST'])
 def new_game():
+    """Example endpoint creates a new game and
+        returns a current game id, user and dealer cards
+        and a game status checking if there is a winner
+        This is using json for specifications.
+        ---
+        definitions:
+          GameDefinitionObject:
+            type: object
+              properties:
+                game_id:
+                  type: integer
+                user_cards:
+                  type: array
+                  items:
+                    $ref: '#/definitions/Card'
+                dealer_cards:
+                  type: array
+                  items:
+                    $ref: '#/definitions/Card'
+                status:
+                  type: bool
+          Card:
+            type: object
+              properties:
+                suit:
+                  type: IntEnum
+                rank:
+                  type: IntEnum
+
+        responses:
+          200:
+            description: A json object
+            schema:
+              $ref: '#/definitions/GameDefinitionObject'
+            examples:
+              rgb: {"game_id": 1,"user_cards": [{"suit": 3,"rank": 5},
+                    {"suit": 3,"rank": 13}],
+                    "dealer_cards": [{"suit": 3,"rank": 2}],
+                    "status": null}
+        """
     game_id = 1
-    user_cards = UserCards()
+
     dealer_cards = DealerCards()
+    user_cards = UserCards()
     for _ in range(2):
-        user_cards.insert(game_id=game_id, card_id=Card.to_id(deck.deal()))
-        dealer_cards.insert(game_id=game_id, card_id=Card.to_id(deck.deal()))
+        user_cards.insert(game_id=game_id, card_id=deck.deal().to_id())
+        dealer_cards.insert(game_id=game_id, card_id=deck.deal().to_id())
     user = user_cards.select_cards(game_id=game_id)
     dealer = dealer_cards.select_one_card(game_id=game_id)
+    conn.commit()
     return jsonify(game_id=game_id, user_cards=user,
                    dealer_cards=dealer, status=None)
 
 
+game_id=1
+
 @app.route('/decision', methods=['GET', 'POST'])
 def decision():
-
-    game_id = 1
     user_cards = UserCards()
     if request.method == 'GET':
         response = user_cards.select_cards(game_id=game_id)
