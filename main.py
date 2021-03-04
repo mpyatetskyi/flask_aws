@@ -1,4 +1,3 @@
-import json
 import sqlite3
 from database import User, ChipsLedger, Game, UserCards, DealerCards
 from flask import Flask, request, jsonify
@@ -7,7 +6,8 @@ from methods import Deck, Card
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
-conn = sqlite3.connect('C:/Users/mpiatetskyi/PycharmProjects/flask_aws/blackjack.db', check_same_thread=False)
+database_link = 'C:/Users/mpiatetskyi/PycharmProjects/flask_aws/blackjack.db'
+conn = sqlite3.connect(database_link, check_same_thread=False)
 c = conn.cursor()
 
 
@@ -29,6 +29,7 @@ def create_tables():
 
 user_id = 1
 deck = Deck()
+
 
 @app.route('/newgame', methods=['GET', 'POST'])
 def new_game():
@@ -86,7 +87,8 @@ def new_game():
                    dealer_cards=dealer, status=None)
 
 
-game_id=1
+game_id = 1
+
 
 @app.route('/decision', methods=['GET', 'POST'])
 def decision():
