@@ -1,28 +1,15 @@
-import json
 import sqlite3
 from database import User, ChipsLedger, Game, UserCards, DealerCards
 from flask import Flask, request, jsonify
 from methods import Deck, Card
-
+from flasgger import Swagger
 
 app = Flask(__name__)
+swagger = Swagger(app)
 app.config['JSON_SORT_KEYS'] = False
-conn = sqlite3.connect('blackjack.db', check_same_thread=False)
+database_link = 'C:/Users/mpiatetskyi/PycharmProjects/flask_aws/blackjack.db'
+conn = sqlite3.connect(database_link, check_same_thread=False)
 c = conn.cursor()
-
-
-@app.route("/")
-def hello():
-    return jsonify('Hello World')
-
-
-@app.route('/newuser/<string:name>', methods=['GET', 'POST'])
-def new_user(name):
-    user = User()
-    user.insert(name)
-    conn.commit()
-    data = user.select_user_id()
-    return json.dumps(data)
 
 
 @app.route('/createtables')
@@ -43,27 +30,156 @@ def create_tables():
 
 user_id = 1
 deck = Deck()
-deck.shuffle()
 
 
-@app.route('/newgame', methods=['GET', 'POST'])
+@app.route('/newgame', methods=['POST'])
 def new_game():
+    """Endpoint created to create and start a BlackJack game
+    Returns a current game id, player and dealer cards,
+    and a game status
+    This is using docstrings for specifications.
+    ---
+    tags:
+    - name: "newgame"
+    definitions:
+      Newgame:
+        type: object
+        properties:
+          game_id:
+            type: integer
+          user_cards:
+            type: array
+            items:
+              $ref: '#/definitions/Card'
+          dealer_card:
+            type: array
+            items:
+              $ref: '#/definitions/Card'
+          status:
+            type: boolean
+      Card:
+        type: object
+        properties:
+          suit:
+            type: integer
+          rank:
+            type: integer
+    responses:
+      200:
+        description: An application/json response
+        schema:
+          $ref: '#/definitions/Newgame'
+        examples:
+          newgame: {
+            "game_id": 1,
+            "user_cards": [{"suit": 1,"rank": 13},
+                            {"suit": 4,"rank": 4}],
+            "dealer_cards": [{"suit": 1,"rank": 8}],
+            "status": null}
+    """
     game_id = 1
-    user_cards = UserCards()
+
     dealer_cards = DealerCards()
+    user_cards = UserCards()
     for _ in range(2):
-        user_cards.insert(game_id=game_id, card_id=Card.to_id(deck.deal()))
-        dealer_cards.insert(game_id=game_id, card_id=Card.to_id(deck.deal()))
+        user_cards.insert(game_id=game_id, card_id=deck.deal().to_id())
+        dealer_cards.insert(game_id=game_id, card_id=deck.deal().to_id())
     user = user_cards.select_cards(game_id=game_id)
     dealer = dealer_cards.select_one_card(game_id=game_id)
+    conn.commit()
     return jsonify(game_id=game_id, user_cards=user,
                    dealer_cards=dealer, status=None)
 
 
+game_id = 1
+
+
 @app.route('/decision', methods=['GET', 'POST'])
 def decision():
+    """Endpoint for user decision (take a card or pass)
+        Returns a current game id, player and dealer cards,
+        and a game status
+        This is using docstrings for specifications.
+        ---
+      post:
+        tags:
+        - name: "decision"
+          description: ""
+        definitions:
+          Decision:
+            type: object
+            properties:
+              game_id:
+                type: integer
+              user_cards:
+                type: array
+                items:
+                  $ref: '#/definitions/Card'
+              dealer_card:
+                type: array
+                items:
+                  $ref: '#/definitions/Card'
+              status:
+                type: boolean
+          Card:
+            type: object
+            properties:
+              suit:
+                type: integer
+              rank:
+                type: integer
+        responses:
+          200:
+            description: An application/json response
+            schema:
+              $ref: '#/definitions/Decision'
+            examples:
+              newgame: {
+                "game_id": 1,
+                "user_cards": [{"suit": 1,"rank": 13},
+                                {"suit": 4,"rank": 4}],
+                "dealer_cards": [{"suit": 1,"rank": 8}],
+                "status": null}
+      get:
+        tags:
+        - name: "decision"
+          description: ""
+        definitions:
+          Decision:
+            type: object
+            properties:
+              game_id:
+                type: integer
+              user_cards:
+                type: array
+                items:
+                  $ref: '#/definitions/Card'
+              dealer_card:
+                type: array
+                items:
+                  $ref: '#/definitions/Card'
+              status:
+                type: boolean
+          Card:
+            type: object
+            properties:
+              suit:
+                type: integer
+              rank:
+                type: integer
+        responses:
+          200:
+            description: An application/json response
+            schema:
+              $ref: '#/definitions/Decision'
+            examples:
+              newgame: {
+                "game_id": 1,
+                "user_cards": [{"suit": 1,"rank": 13},{"suit": 4,"rank": 4}],
+                "dealer_cards": [{"suit": 1,"rank": 8}],
+                "status": null}
 
-    game_id = 1
+        """
     user_cards = UserCards()
     if request.method == 'GET':
         response = user_cards.select_cards(game_id=game_id)
