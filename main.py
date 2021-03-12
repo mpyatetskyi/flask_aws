@@ -1,8 +1,8 @@
 import sqlite3
 from database import User, ChipsLedger, Game, UserCards, DealerCards
-from flask import Flask, request, jsonify
-from methods import Deck, Card
 from flasgger import Swagger
+from flask import Flask, request, jsonify
+from methods import Deck, Status
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -28,8 +28,19 @@ def create_tables():
     return "all tables were successfully created"
 
 
+@app.route('/user/<username>', methods=['POST'])
+def create_user(username):
+    """route made to create a user"""
+    user = User()
+    user.insert(username)
+    id = user.select_user_id()
+    conn.commit()
+    c.execute(f"SELECT user_name FROM user WHERE user_id={id}")
+    a = c.fetchone()
+    return jsonify(a)
+
+
 user_id = 1
-deck = Deck()
 
 
 @app.route('/newgame', methods=['POST'])
@@ -51,10 +62,14 @@ def new_game():
             type: array
             items:
               $ref: '#/definitions/Card'
+          user_points:
+            type: integer
           dealer_card:
             type: array
             items:
               $ref: '#/definitions/Card'
+          dealer_points:
+            type: integer
           status:
             type: boolean
       Card:
@@ -77,6 +92,8 @@ def new_game():
             "dealer_cards": [{"suit": 1,"rank": 8}],
             "status": null}
     """
+
+    deck = Deck()
     game_id = 1
 
     dealer_cards = DealerCards()
@@ -87,11 +104,12 @@ def new_game():
     user = user_cards.select_cards(game_id=game_id)
     dealer = dealer_cards.select_one_card(game_id=game_id)
     conn.commit()
+    status = Status.status_check(user)
+    user_value = Status.cards_value(user)
+    dealer_value = Status.cards_value(dealer)
     return jsonify(game_id=game_id, user_cards=user,
-                   dealer_cards=dealer, status=None)
-
-
-game_id = 1
+                   user_points=user_value, dealer_cards=dealer,
+                   dealer_points=dealer_value, status=status)
 
 
 @app.route('/decision', methods=['GET', 'POST'])
@@ -101,7 +119,6 @@ def decision():
         and a game status
         This is using docstrings for specifications.
         ---
-      post:
         tags:
         - name: "decision"
           description: ""
@@ -115,10 +132,14 @@ def decision():
                 type: array
                 items:
                   $ref: '#/definitions/Card'
+              user_points:
+                type: integer
               dealer_card:
                 type: array
                 items:
                   $ref: '#/definitions/Card'
+              dealer_points:
+                type: integer
               status:
                 type: boolean
           Card:
@@ -138,56 +159,52 @@ def decision():
                 "game_id": 1,
                 "user_cards": [{"suit": 1,"rank": 13},
                                 {"suit": 4,"rank": 4}],
+                "user_points": 14,
                 "dealer_cards": [{"suit": 1,"rank": 8}],
+                "dealer_points": 0,
                 "status": null}
-      get:
-        tags:
-        - name: "decision"
-          description: ""
-        definitions:
-          Decision:
-            type: object
-            properties:
-              game_id:
-                type: integer
-              user_cards:
-                type: array
-                items:
-                  $ref: '#/definitions/Card'
-              dealer_card:
-                type: array
-                items:
-                  $ref: '#/definitions/Card'
-              status:
-                type: boolean
-          Card:
-            type: object
-            properties:
-              suit:
-                type: integer
-              rank:
-                type: integer
-        responses:
-          200:
-            description: An application/json response
-            schema:
-              $ref: '#/definitions/Decision'
-            examples:
-              newgame: {
-                "game_id": 1,
-                "user_cards": [{"suit": 1,"rank": 13},{"suit": 4,"rank": 4}],
-                "dealer_cards": [{"suit": 1,"rank": 8}],
-                "status": null}
-
         """
+
+    game_id = 1
     user_cards = UserCards()
-    if request.method == 'GET':
-        response = user_cards.select_cards(game_id=game_id)
-        return jsonify(game_id=game_id, cards=response)
-    elif request.method == 'POST':
-        user_cards.insert(game_id=game_id, card_id=Card.to_id((deck.deal())))
-        response = user_cards.select_cards(game_id=game_id)
-        return jsonify(game_id=game_id, cards=response)
+    dealer_cards = DealerCards()
+
+    cards = (user_cards.select_cards(game_id=game_id) +
+             dealer_cards.select_cards(game_id=game_id))
+    deck = Deck.recreate_deck(cards=cards)
+
+    if request.method == 'POST':
+        user_cards.insert(game_id=game_id, card_id=deck.deal().to_id())
+        conn.commit()
+        user = user_cards.select_cards(game_id=game_id)
+        dealer = dealer_cards.select_one_card(game_id=game_id)
+        status = Status.status_check(user)
+        user_value = Status.cards_value(user)
+        dealer_value = Status.cards_value(dealer)
+
+        return jsonify(game_id=game_id, user_cards=user,
+                       user_points=user_value, dealer_cards=dealer,
+                       dealer_points=dealer_value, status=status)
+
+    elif request.method == 'GET':
+        points = Status.cards_value(
+            dealer_cards.select_cards(game_id=game_id))
+        while points < 17:
+            dealer_cards.insert(game_id=game_id,
+                                card_id=deck.deal().to_id())
+            conn.commit()
+            points = Status.cards_value(
+                dealer_cards.select_cards(game_id=game_id))
+
+        user = user_cards.select_cards(game_id=game_id)
+        dealer = dealer_cards.select_cards(game_id=game_id)
+        user_value = Status.cards_value(user)
+        dealer_value = Status.cards_value(dealer)
+        status = Status.status_check(user, dealer_value=dealer)
+
+        return jsonify(game_id=game_id, user_cards=user,
+                       user_points=user_value, dealer_cards=dealer,
+                       dealer_points=dealer_value, status=status)
 
 
 if __name__ == '__main__':
