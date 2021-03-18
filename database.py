@@ -18,25 +18,34 @@ class DatabaseTables:
 
 class User(DatabaseTables):
 
-    def __init__(self):
-        pass
-
     def create(self):
         c.execute("""CREATE TABLE IF NOT EXISTS user (
                     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_name TEXT
+                    user_name TEXT,
+                    email VARCHAR(100),
+                    password VARCHAR(100)
                     )
                     """)
 
-    def insert(self, name):
-        c.execute("INSERT INTO user (user_name)"
-                  " VALUES (?)", [name])
+    def insert(self, name, email, password):
+        c.execute("INSERT INTO user (user_name, email, password)"
+                  " VALUES (?,?,?)", [name, email, password])
+        conn.commit()
         return 'Success'
 
     def select_user_id(self):
         c.execute('SELECT user_id FROM user LIMIT 1')
 
-        return c.fetchall()
+    def select_user_id_by_email(self, email):
+        c.execute('SELECT user_id FROM user WHERE email=?', [email])
+        id = c.fetchone()
+        return int(id)
+
+
+    def select_user_by_email(self, email):
+        c.execute('SELECT * FROM user WHERE email=?', [email])
+
+        return c.fetchone()
 
 
 class ChipsLedger(DatabaseTables):

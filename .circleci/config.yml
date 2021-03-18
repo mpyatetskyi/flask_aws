@@ -16,6 +16,7 @@ jobs:
       - image: circleci/python:3.9.1
     steps:
       - checkout
+      - run: pip install -r reqirements.txt
       - run: pip install pytest
       - run: pytest
 workflows:

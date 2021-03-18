@@ -1,13 +1,18 @@
 import sqlite3
+import bcrypt
+import jwt
+import datetime
 from database import User, ChipsLedger, Game, UserCards, DealerCards
 from flasgger import Swagger
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from methods import Deck, Status
 
 app = Flask(__name__)
 swagger = Swagger(app)
 app.config['JSON_SORT_KEYS'] = False
 database_link = 'C:/Users/mpiatetskyi/PycharmProjects/flask_aws/blackjack.db'
+app.config['SECRET_KEY'] = 'secret'
+app.config['SQLALCHEMY_DATABASE_URI'] = database_link
 conn = sqlite3.connect(database_link, check_same_thread=False)
 c = conn.cursor()
 
@@ -28,16 +33,68 @@ def create_tables():
     return "all tables were successfully created"
 
 
-@app.route('/user/<username>', methods=['POST'])
-def create_user(username):
-    """route made to create a user"""
-    user = User()
-    user.insert(username)
-    id = user.select_user_id()
-    conn.commit()
-    c.execute(f"SELECT user_name FROM user WHERE user_id={id}")
-    a = c.fetchone()
-    return jsonify(a)
+@app.route('/signup', methods=['POST'])
+def sign_up():
+
+    data = request.get_json()
+
+    if 'name' not in data:
+        return jsonify({'message': 'Name is missing!'})
+
+    elif 'email' not in data:
+        return jsonify({'message': 'Email is missing!'})
+
+    elif 'password' not in data:
+        return jsonify({'message': 'Password is missing!'})
+
+    elif all(data[i] for i in ['name', 'email', 'password']):
+
+        user = User()
+        name = data['name']
+        email = data['email']
+        password = bcrypt.hashpw(data['password'].encode('utf-8'),
+                                 bcrypt.gensalt(10)).decode('utf-8')
+
+        if user.select_user_by_email(email):
+            return jsonify({'message': 'User with such email already exist'})
+
+        user.insert(name, email, password)
+        conn.commit()
+
+        return jsonify({'message': 'New user created!'})
+
+
+@app.route('/login')
+def login():
+    auth = request.get_json()
+
+    if 'email' not in auth or 'password' not in auth:
+        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+
+    c.execute('SELECT user_name FROM user WHERE email=? LIMIT 1', [auth['email']])
+    user = c.fetchone()[0]
+
+    if not user:
+        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+
+    c.execute('SELECT password FROM user WHERE email=?', [auth['email']])
+    pwd = c.fetchone()[0]
+
+    c.execute('SELECT user_id FROM user WHERE email=?', [auth['email']])
+    id = c.fetchone()[0]
+
+    if bcrypt.checkpw(auth["password"].encode('utf-8'), pwd.encode('UTF-8')):
+        token = jwt.encode({"user_id": id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
+                           app.config['SECRET_KEY'])
+
+        return jsonify({"token": token})
+
+    return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    pass
 
 
 user_id = 1
