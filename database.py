@@ -41,7 +41,6 @@ class User(DatabaseTables):
         id = c.fetchone()
         return int(id)
 
-
     def select_user_by_email(self, email):
         c.execute('SELECT * FROM user WHERE email=?', [email])
 
