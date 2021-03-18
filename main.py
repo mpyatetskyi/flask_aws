@@ -69,13 +69,18 @@ def login():
     auth = request.get_json()
 
     if 'email' not in auth or 'password' not in auth:
-        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+        return make_response('Could not verify', 401,
+                             {'WWW-Authenticate':
+                              'Basic realm="Login required!"'})
 
-    c.execute('SELECT user_name FROM user WHERE email=? LIMIT 1', [auth['email']])
+    c.execute('SELECT user_name FROM user WHERE email=? LIMIT 1',
+              [auth['email']])
     user = c.fetchone()[0]
 
     if not user:
-        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+        return make_response('Could not verify', 401,
+                             {'WWW-Authenticate':
+                              'Basic realm="Login required!"'})
 
     c.execute('SELECT password FROM user WHERE email=?', [auth['email']])
     pwd = c.fetchone()[0]
@@ -84,12 +89,16 @@ def login():
     id = c.fetchone()[0]
 
     if bcrypt.checkpw(auth["password"].encode('utf-8'), pwd.encode('UTF-8')):
-        token = jwt.encode({"user_id": id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
+        token = jwt.encode({"user_id": id,
+                            'exp': datetime.datetime.utcnow() +
+                            datetime.timedelta(minutes=30)},
                            app.config['SECRET_KEY'])
 
         return jsonify({"token": token})
 
-    return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+    return make_response('Could not verify', 401,
+                         {'WWW-Authenticate':
+                          'Basic realm="Login required!"'})
 
 
 @app.route('/logout', methods=['POST'])
