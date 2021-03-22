@@ -5,7 +5,9 @@ import datetime
 from database import User, ChipsLedger, Game, UserCards, DealerCards
 from flasgger import Swagger
 from flask import Flask, request, jsonify, make_response
+from functools import wraps
 from methods import Deck, Status
+
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -15,6 +17,38 @@ app.config['SECRET_KEY'] = 'secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = database_link
 conn = sqlite3.connect(database_link, check_same_thread=False)
 c = conn.cursor()
+
+
+def token_required(f):
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
+
+        if not token:
+            return jsonify({'message': 'Token is missing'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms='HS256')
+            c.execute('SELECT * FROM user WHERE user_id=? LIMIT 1', [data['user_id']])
+            user = c.fetchone()
+            current_user = user[0]
+
+        except:
+            return jsonify({'message': 'Token is invalid'}), 401
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated
+
+
+@app.route('/test')
+@token_required
+def test(current_user):
+    return jsonify({"user_id": current_user})
 
 
 @app.route('/createtables')
@@ -35,6 +69,40 @@ def create_tables():
 
 @app.route('/signup', methods=['POST'])
 def sign_up():
+    """
+    Create a new user
+    ---
+    tags:
+    - name: "user"
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    parameters:
+    - in: body
+      name: user
+      description: The user to create
+      schema:
+        $ref: '#/definitions/User'
+    definitions:
+      User:
+        type: object
+        required:
+          - name
+          - email
+          - password
+        properties:
+          name:
+            type: string
+          email:
+            type: string
+          password:
+            type: string
+    responses:
+      default:
+        description: successful operation
+
+        """
 
     data = request.get_json()
 
@@ -271,6 +339,24 @@ def decision():
         return jsonify(game_id=game_id, user_cards=user,
                        user_points=user_value, dealer_cards=dealer,
                        dealer_points=dealer_value, status=status)
+
+
+@app.route('/chips', methods=['GET'])
+@token_required
+def get_chips(current_user):
+    chips = ChipsLedger()
+    total = chips.select_total_chips(current_user)
+    if total is None:
+        return jsonify(chips=0)
+    return jsonify(chips=total)
+
+
+@app.route('/chips/<cash>', methods=['POST'])
+@token_required
+def add_chips(current_user, cash):
+    chips = ChipsLedger()
+    chips.insert(current_user, cash)
+    return jsonify({"message": str(cash) + "$ added"})
 
 
 if __name__ == '__main__':
