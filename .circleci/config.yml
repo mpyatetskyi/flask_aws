@@ -18,7 +18,7 @@ jobs:
       - checkout
       - run: pip install -r requirements.txt
       - run: pip install pytest
-      - run: app.config.update(SQLALCHEMY_DATABASE_URI='DB_URI')
+      - run: app.config['SQLALCHEMY_DATABASE_URI']='DB_URI'
       - run: pytest
 workflows:
   first:
