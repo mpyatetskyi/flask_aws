@@ -21,6 +21,7 @@ jobs:
     steps:
       - checkout
       - run: pip install -r requirements.txt
+      - run: app.config.from_envvar($DB_URI)
       - run: pip install pytest
       - run: pytest
   mypy:
