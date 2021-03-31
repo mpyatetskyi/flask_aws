@@ -10,7 +10,7 @@ from methods import Deck, Status
 from send_email import send_email
 
 
-TEST = 'file:///C:/Users/mpiatetskyi/PycharmProjects/flask_aws/'
+TEST = 'C:/Users/mpiatetskyi/PycharmProjects/flask_aws/'
 
 app = Flask(__name__)
 app.config.update(
@@ -24,7 +24,7 @@ app.config.update(
     }
 )
 
-conn = sqlite3.connect('file:///C:/Users/mpiatetskyi/PycharmProjects/'
+conn = sqlite3.connect('C:/Users/mpiatetskyi/PycharmProjects/'
                        'flask_aws/blackjack.db', check_same_thread=False)
 c = conn.cursor()
 
