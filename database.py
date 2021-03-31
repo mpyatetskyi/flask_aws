@@ -57,7 +57,7 @@ class User(DatabaseTables):
     def select_user_id(self):
         c.execute('SELECT user_id FROM user LIMIT 1')
 
-    def select_user_id_by_email(self, email):
+    def select_user_id_by_email(self, email: str) -> int:
         c.execute('SELECT user_id FROM user WHERE email=?', [email])
         id = c.fetchone()
         return int(id)
@@ -143,7 +143,7 @@ class UserCards(DatabaseTables):
                   'VALUES (?,?)', [game_id, card_id])
         conn.commit()
 
-    def select_cards(self, game_id):
+    def select_cards(self, game_id: int) -> list[object]:
         c.execute('SELECT card_id FROM user_cards '
                   'WHERE (game_id=?)', [game_id])
         return [Card.from_id(i[0]) for i in c.fetchall()]
@@ -167,13 +167,13 @@ class DealerCards(DatabaseTables):
                   'VALUES (?,?)', [game_id, card_id])
         conn.commit()
 
-    def select_one_card(self, game_id):
+    def select_one_card(self, game_id: int) -> list[object]:
         c.execute('SELECT card_id FROM dealer_cards '
                   'WHERE (game_id=?) LIMIT 1', [game_id])
         card = c.fetchone()
         return [Card.from_id(card[0])]
 
-    def select_cards(self, game_id):
+    def select_cards(self, game_id: int) -> list[object]:
         c.execute('SELECT card_id FROM dealer_cards '
                   'WHERE (game_id=?)', [game_id])
         res = [Card.from_id(i[0]) for i in c.fetchall()]

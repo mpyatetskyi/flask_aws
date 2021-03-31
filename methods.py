@@ -56,7 +56,7 @@ class Deck:
         self.deck = [Card(s, r) for s in Suits for r in Ranks]
         shuffle(self.deck)
 
-    def deal(self) -> object:
+    def deal(self):
         """Deals one card from a deck"""
         if len(self.deck) > 1:
             return self.deck.pop()
@@ -77,7 +77,7 @@ class Status:
         pass
 
     @staticmethod
-    def cards_value(cards: list[object]) -> int:
+    def cards_value(cards: list[Card]) -> int:
         if len(cards) <= 1:
             return 0
         aces = 0
@@ -97,8 +97,8 @@ class Status:
         return value
 
     @staticmethod
-    def status_check(user_value: list[object],
-                     dealer_value=[]) -> (bool, None):
+    def status_check(user_value,
+                     dealer_value=[]):
         user = Status.cards_value(user_value)
         if dealer_value == []:
             if user < 21:
@@ -119,12 +119,3 @@ class Status:
                 return True
             elif user < dealer:
                 return False
-
-
-@dataclass_json
-@dataclass(frozen=True)
-class GameDataDTO:
-    game_id: int
-    user_cards: list
-    dealer_cards: list
-    status: bool

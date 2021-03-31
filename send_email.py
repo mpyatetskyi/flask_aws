@@ -1,7 +1,7 @@
 import smtplib
 
 
-def send_email(mail):
+def send_email(mail: str) -> None:
     from_email = "m.pyatetskyi.test@gmail.com"
     from_password = "qwerty123456qwerty"
     to_email = mail

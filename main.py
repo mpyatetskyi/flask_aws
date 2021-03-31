@@ -10,12 +10,14 @@ from methods import Deck, Status
 from send_email import send_email
 
 
+TEST = 'C:/Users/mpiatetskyi/PycharmProjects/' \
+       'flask_aws/blackjack.db'
+
 app = Flask(__name__)
 app.config.update(
     JSON_SORT_KEYS=False,
     SECRET_KEY='secret',
-    SQLALCHEMY_DATABASE_URI='C:/Users/mpiatetskyi/PycharmProjects/'
-                            'flask_aws/blackjack.db',
+    SQLALCHEMY_DATABASE_URI='TEST',
     SWAGGER={
         "title": 'My API',
         "uiversion": 3,
