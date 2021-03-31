@@ -81,7 +81,9 @@ def token_required(f):
             user = c.fetchone()
             current_user = user[0]
 
-        except:
+        except TypeError:
+            return jsonify({'message': 'Token is invalid'}), 401
+        except jwt.exceptions.DecodeError:
             return jsonify({'message': 'Token is invalid'}), 401
 
         return f(current_user, *args, **kwargs)
@@ -329,7 +331,8 @@ def new_game(current_user):
         return jsonify({'message': 'You have no money in your wallet to play'})
 
     if bet > chips.select_total_chips(current_user):
-        return jsonify({'message': 'You don`t have enough money to make a bet!'})
+        return jsonify({'message': 'You don`t have enough money'
+                                   ' to make a bet!'})
 
     deck = Deck()
     game = Game()

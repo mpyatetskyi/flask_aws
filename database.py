@@ -35,22 +35,19 @@ class User(DatabaseTables):
     def update_name(self, user_id, name):
         c.execute("UPDATE user "
                   "SET user_name = ? "
-                  "WHERE user_id = ? "
-                  , [name, user_id])
+                  "WHERE user_id = ? ", [name, user_id])
         conn.commit()
 
     def update_email(self, user_id, email):
         c.execute("UPDATE user "
                   "SET email = ? "
-                  "WHERE user_id = ?"
-                  , [email, user_id])
+                  "WHERE user_id = ?", [email, user_id])
         conn.commit()
 
     def update_password(self, user_id, password):
         c.execute("UPDATE user "
                   "SET password = ? "
-                  "WHERE user_id = ? "
-                  , [password, user_id])
+                  "WHERE user_id = ? ", [password, user_id])
         conn.commit()
 
     def delete_user(self, user_id):
