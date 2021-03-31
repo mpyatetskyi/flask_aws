@@ -20,9 +20,19 @@ jobs:
       - run: pip install pytest
       - run: echo app.config['SQLALCHEMY_DATABASE_URI']='DB_URI'
       - run: pytest
+  mypy:
+    docker:
+      - image: circleci/python:3.9.1
+    steps:
+      - checkout
+      - run: pip install -r requirements.txt
+      - run: pip install mypy
+      - run: mypy methods.py
+      - run: mypy database.py
 workflows:
   first:
     jobs:
       - flake8
       - pytest
+      - mypy
 
