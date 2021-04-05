@@ -1,6 +1,6 @@
-def test_status_code_and_content(connection):
-    assert connection.status_code == 200
-    assert connection.content_type == 'application/json'
+def test_status_code_and_content(connection_newgame):
+    assert connection_newgame.status_code == 200
+    assert connection_newgame.content_type == 'application/json'
 
 
 def test_keys_data_types_in_response_json(data_json):
@@ -8,6 +8,8 @@ def test_keys_data_types_in_response_json(data_json):
     assert type(data_json['user_cards']) == list
     assert type(data_json['dealer_cards']) == list
     assert data_json['status'] in (None, True, False)
+    assert type(data_json['user_points']) == int
+    assert type(data_json['dealer_points']) == int
 
 
 def test_cards_type_response_json(data_json):
